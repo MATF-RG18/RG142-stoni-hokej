@@ -1,5 +1,10 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <GL/glut.h>
+
+/* Konstanta pi. */
+const static float pi = 3.141592653589793;
 
 /* Dimenzije prozora */
 static int window_width, window_height;
@@ -51,6 +56,53 @@ static void on_reshape(int width, int height)
     /* Pamte se sirina i visina prozora. */
     window_width = width;
     window_height = height;
+
+    /* Podesava se viewport. */
+    glViewport(0, 0, width, height);
+
+    /* Podesava se projekcija. */
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, (float) width / height, 1, 25);
+}
+
+void draw_table_base()
+{
+    glScalef(1, 0.3, 1);
+    glColor3f(0.7, 0.7, 0.7);
+    glutSolidCube(0.5);
+}
+
+void draw_table(float height, float radius_top, float radius_bottom)
+{
+#define SEGMENTS 16
+
+
+    /* postavljamo osnovnu boju objekta na belu */
+    glColor3f(0.7, 0.7, 0.7);
+
+    int u = 0;
+    float angle = 0;
+
+    /* crtamo zarubljenu kupu */
+    glBegin(GL_TRIANGLE_STRIP);
+        for (u = 0; u <= SEGMENTS; u++) {
+            angle = u * (2 * pi / SEGMENTS);
+
+            /* definisemo normalu povrsi */
+            glNormal3f(cos(angle), 0, sin(angle));
+
+            /* definisemo koordinate tacaka u prostoru */
+            glVertex3f(radius_bottom * cos(angle), 0, radius_bottom * sin(angle));
+
+            glVertex3f(radius_top * cos(angle), -height, radius_top * sin(angle));
+
+        }
+    glEnd();
+
+    draw_table_base();
+
+#undef SEGMENTS
 }
 
 static void on_display(void)
@@ -58,16 +110,6 @@ static void on_display(void)
     /* Brise se prethodni sadrzaj prozora. */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /* Podesava se viewport. */
-    glViewport(0, 0, window_width, window_height);
-
-    /* Podesava se projekcija. */
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(
-            60,
-            window_width/(float)window_height,
-            1, 5);
 
     /* Podesava se tacka pogleda. */
     glMatrixMode(GL_MODELVIEW);
@@ -78,14 +120,37 @@ static void on_display(void)
             0, 1, 0
         );
 
-    /*
-     * Kreira se kocka i primenjuje se geometrijska transformacija na
-     * istu.
-     */
-    glColor3f(1, 0, 0);
-    glTranslatef(0, .5, 0);
-    glScalef(2, 0.5, 2);
-    glutWireCube(0.5);
+    /* Crtaju se noge stola */
+    glPushMatrix();
+        glTranslatef(-1, -1, -2);
+
+        glPushMatrix();
+            glTranslatef(1, 0, 0);
+            draw_table(1, 0.1, 0.2);
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslatef(1, 0, -2);
+            draw_table(1, 0.1, 0.2);
+        glPopMatrix();
+
+        glPushMatrix();
+            draw_table(1, 0.1, 0.2);
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslatef(0, 0, -2);
+            draw_table(1, 0.1, 0.2);
+        glPopMatrix();
+
+    /* Crta se ploca stola */
+    glColor3f(0.5, 0.5, 0.5);
+
+    glPushMatrix();
+       glTranslatef(0.5, 0.2, -1);
+       glScalef(1.5, 0.2, 2.5);
+       glutWireCube(1);
+    glPopMatrix();
 
     /* Nova slika se salje na ekran. */
     glutSwapBuffers();
